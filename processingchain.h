@@ -6,10 +6,11 @@
 class ProcessingChain {
   typedef std::function<void(const cv::Mat&,cv::Mat&)> ProcessStep;
   std::vector<cv::Mat> frames_;
-  std::vector<ProcessStep> steps_;
+  std::vector<std::pair<std::string, ProcessStep> > steps_;
 
 public:
-  void addStep(ProcessStep step);
+  void addStep(std::string name, ProcessStep step);
+  std::string getStepName(size_t step);
   size_t frameCount() const;
   const cv::Mat& processUntilStep(size_t step, cv::Mat frame);
 
