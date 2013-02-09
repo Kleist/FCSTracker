@@ -4,30 +4,17 @@
 #include "opencv2/opencv.hpp"
 
 class ProcessingChain {
-  typedef std::function<cv::Mat(cv::Mat)> ProcessStep;
+  typedef std::function<void(const cv::Mat&,cv::Mat&)> ProcessStep;
   std::vector<cv::Mat> frames_;
   std::vector<ProcessStep> steps_;
+
 public:
-  void addStep(ProcessStep step) {
-    steps_.push_back(step);
-  }
+  void addStep(ProcessStep step);
+  size_t frameCount() const;
+  const cv::Mat& processUntilStep(size_t step, cv::Mat frame);
 
-  void process(cv::Mat frame) {
-    frames_.clear();
-    frames_.push_back(frame);
-    for(ProcessStep step : steps_) {
-      frames_.push_back(step(frames_.back()));
-    }
-  }
-
-  size_t frameCount() const {
-    return steps_.size()+1; // Includes original image
-  }
-
-  const cv::Mat& getResultAtStep(size_t step) {
-    assert(step < frames_.size());
-    return frames_[step];
-  }
+private:
+  void process_(cv::Mat frame, size_t steps);
 };
 
 #endif // PROCESSINGCHAIN_H
