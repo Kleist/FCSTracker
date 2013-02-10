@@ -1,10 +1,8 @@
 #include <memory>
-#include <chrono>
-#include <iomanip>
-#include <ios>
 
 #include <opencv2/opencv.hpp>
 
+#include "stopwatch.h"
 #include "backgroundestimator.h"
 
 bool pressedESC() {
@@ -24,6 +22,7 @@ int processFrames(std::function<void(cv::Mat)> body) {
     cap >> frame;
     body(frame);
   }
+  return 0;
 }
 
 const char*const BGName = "Background Estimate";
@@ -33,9 +32,14 @@ int main() {
   cv::namedWindow(TrackerName);
   cv::namedWindow(BGName);
   BackgroundEstimator bgEst;
+  StopWatch stopWatch;
   return processFrames([&](cv::Mat frame) {
+    auto millis = stopWatch.getMillisAndReset();
     bgEst.addFrame(frame);
     cv::imshow(BGName, bgEst.backgroundEstimate());
+    std::ostringstream oss;
+    oss << 1000/millis;
+    cv::putText(frame, oss.str(),cv::Point(30,frame.rows-30), cv::FONT_HERSHEY_COMPLEX_SMALL, 0.8, cv::Scalar(200,200,250),1,CV_AA);
     cv::imshow(TrackerName, frame);
   });
 }
