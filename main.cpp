@@ -29,7 +29,35 @@ int processFrames(std::function<void(cv::Mat)> body) {
 const char*const BGName = "Background Estimate";
 const char*const TrackerName = "FCS Tracker";
 
-int main() {
+int main(int argc, char** argv) {
+  if (argc>1 && argv[1] == std::string("--record")) {
+    std::string filename = "input.avi";
+    if (argc>2) filename = argv[2];
+
+    cv::VideoCapture cap(0);
+    if (!cap.isOpened()) {
+      std::cerr << "Couldn't open videocam" << std::endl;
+      return -1;
+    }
+
+    cv::Mat frame;
+    cap >> frame;
+
+    cv::VideoWriter writer;
+    writer.open(filename,  CV_FOURCC('D','I','V','X'),30, frame.size(), true);
+    if (!writer.isOpened()) {
+        std::cerr << "Couldn't open writer with file: " << filename << "\n";
+        return -2;
+    }
+
+    cv::namedWindow("input");
+    while (cv::waitKey(1)<1) {
+      cap >> frame;
+      cv::imshow("input", frame);
+      writer << frame;
+    }
+    return 0;
+  }
   cv::namedWindow(BGName);
   cv::namedWindow(TrackerName);
   int threshold = 30;
