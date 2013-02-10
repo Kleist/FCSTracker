@@ -10,7 +10,8 @@ BackgroundEstimator::BackgroundEstimator(int& threshold)
 
 void BackgroundEstimator::addFrame(cv::Mat newFrame) {
   if (oldest_ == -1) { // Init
-    est_ = newFrame.clone();
+    newFrame.convertTo(est_, CV_32F, 1);
+    cv::accumulateWeighted(newFrame, est_, 1.0);
     lastFrame_ = newFrame;
     frames_.resize(FrameMemory);
     std::fill(frames_.begin(), frames_.end(), newFrame.clone());
@@ -19,7 +20,7 @@ void BackgroundEstimator::addFrame(cv::Mat newFrame) {
   else {
     cv::absdiff(lastFrame_, newFrame, frames_[oldest_]);
     next_();
-    // Calculate diff with oldest frame
+
     cv::Mat absDiffSum;
     bool first = true;
     for (cv::Mat frame : frames_) {
@@ -30,12 +31,10 @@ void BackgroundEstimator::addFrame(cv::Mat newFrame) {
           absDiffSum += frame;
         }
     }
-    // Create mask of diff small enough:
+
     cv::Mat mask;
     cv::inRange(absDiffSum, cv::Scalar(0,0,0), cv::Scalar(threshold_, threshold_, threshold_), mask);
-    newFrame.copyTo(est_,mask);
-    // Where diff is small enough, update background estimate for those pixels
-    //est_ = (1-ForgettingFactor)*frame + ForgettingFactor * est_ - cv::Scalar(1,1,1);
+    cv::accumulateWeighted(newFrame, est_, 0.05, mask);
     lastFrame_ = newFrame.clone();
   }
 }
@@ -45,6 +44,8 @@ void BackgroundEstimator::next_() {
 }
 
 cv::Mat BackgroundEstimator::backgroundEstimate() {
-  return est_;
+  cv::Mat ret;
+  est_.convertTo(ret, CV_8U);
+  return ret;
 }
 
