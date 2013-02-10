@@ -30,26 +30,39 @@ const char*const BGName = "Background Estimate";
 const char*const TrackerName = "FCS Tracker";
 
 int main() {
-  cv::namedWindow(TrackerName);
   cv::namedWindow(BGName);
+  cv::namedWindow(TrackerName);
   int threshold = 30;
   int satMin = 100;
   int valMin = 100;
+  int showStage = 0;
   cv::createTrackbar("threshold", TrackerName, &threshold, 255);
-  cv::createTrackbar("satMin", TrackerName, &satMin, 255);
-  cv::createTrackbar("valMin", TrackerName, &valMin, 255);
+  cv::createTrackbar("showStage", TrackerName, &showStage, 5);
   BackgroundHider bgHider(threshold);
   ColorFilter redFilter(0, 10, satMin, valMin);
   StopWatch stopWatch;
   return processFrames([&](cv::Mat frame) {
     cv::Mat withoutBackground = bgHider.process(frame);
-    cv::Mat processed = redFilter.filter(withoutBackground);
+    cv::Mat eroded;
+    cv::erode(withoutBackground, eroded, cv::Mat(), cv::Point(-1,-1), 3);
+    cv::Mat dilated;
+    cv::dilate(eroded, dilated, cv::Mat(), cv::Point(-1,-1), 5);
     //cv::Mat processed = redFilter.filter(withoutBackground);
-    std::ostringstream oss;
-    auto millis = stopWatch.getMillisAndReset();
-    oss << 1000/millis;
-    cv::putText(processed, oss.str(),cv::Point(30,frame.rows-30), cv::FONT_HERSHEY_COMPLEX_SMALL, 0.8, cv::Scalar(200,200,250),1,CV_AA);
-    cv::imshow(BGName, bgHider.backgroundEstimate());
-    cv::imshow(TrackerName, processed);
+    cv::Mat* showImage = 0;
+    switch (showStage) {
+      case 0: showImage = &frame; break;
+      case 1: showImage = &withoutBackground; break;
+      case 2: showImage = &eroded; break;
+      case 3: showImage = &dilated; break;
+      default: showImage = 0;
+    }
+    if (showImage) {
+      std::ostringstream oss;
+      auto millis = stopWatch.getMillisAndReset();
+      oss << 1000/millis;
+      cv::putText(*showImage, oss.str(),cv::Point(30,frame.rows-30), cv::FONT_HERSHEY_COMPLEX_SMALL, 0.8, cv::Scalar(200,200,250),1,CV_AA);
+      cv::imshow(BGName, bgHider.backgroundEstimate());
+      cv::imshow(TrackerName, *showImage);
+    }
   });
 }
