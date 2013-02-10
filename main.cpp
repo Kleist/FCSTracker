@@ -33,13 +33,18 @@ int main() {
   cv::namedWindow(TrackerName);
   cv::namedWindow(BGName);
   int threshold = 30;
+  int satMin = 100;
+  int valMin = 100;
   cv::createTrackbar("threshold", TrackerName, &threshold, 255);
+  cv::createTrackbar("satMin", TrackerName, &satMin, 255);
+  cv::createTrackbar("valMin", TrackerName, &valMin, 255);
   BackgroundHider bgHider(threshold);
-  ColorFilter redFilter(0, 10);
+  ColorFilter redFilter(0, 10, satMin, valMin);
   StopWatch stopWatch;
   return processFrames([&](cv::Mat frame) {
     cv::Mat withoutBackground = bgHider.process(frame);
     cv::Mat processed = redFilter.filter(withoutBackground);
+    //cv::Mat processed = redFilter.filter(withoutBackground);
     std::ostringstream oss;
     auto millis = stopWatch.getMillisAndReset();
     oss << 1000/millis;
