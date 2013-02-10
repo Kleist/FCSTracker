@@ -8,7 +8,9 @@ class BackgroundEstimator {
   cv::Mat lastFrame_;
   std::vector<cv::Mat> frames_;
   int oldest_ = -1;
+  int& threshold_;
 public:
+  BackgroundEstimator(int& threshold);
   void addFrame(cv::Mat frame);
   cv::Mat backgroundEstimate();
 private:

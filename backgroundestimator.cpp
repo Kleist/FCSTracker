@@ -2,7 +2,11 @@
 
 static const double ForgettingFactor= 0.9;
 static const int FrameMemory = 10;
-static const int ChangeThreshold = 20;
+
+BackgroundEstimator::BackgroundEstimator(int& threshold)
+  : threshold_(threshold)
+{
+}
 
 void BackgroundEstimator::addFrame(cv::Mat newFrame) {
   if (oldest_ == -1) { // Init
@@ -28,7 +32,7 @@ void BackgroundEstimator::addFrame(cv::Mat newFrame) {
     }
     // Create mask of diff small enough:
     cv::Mat mask;
-    cv::inRange(absDiffSum, cv::Scalar(0,0,0), cv::Scalar(ChangeThreshold,ChangeThreshold,ChangeThreshold), mask);
+    cv::inRange(absDiffSum, cv::Scalar(0,0,0), cv::Scalar(threshold_, threshold_, threshold_), mask);
     newFrame.copyTo(est_,mask);
     // Where diff is small enough, update background estimate for those pixels
     //est_ = (1-ForgettingFactor)*frame + ForgettingFactor * est_ - cv::Scalar(1,1,1);
