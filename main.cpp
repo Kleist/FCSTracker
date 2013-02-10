@@ -4,6 +4,7 @@
 
 #include "stopwatch.h"
 #include "backgroundestimator.h"
+#include "backgroundhider.h"
 
 bool pressedESC() {
     static const int EscapeKey = 27;
@@ -32,6 +33,8 @@ int main() {
   cv::namedWindow(TrackerName);
   cv::namedWindow(BGName);
   BackgroundEstimator bgEst;
+  int threshold = 30;
+  BackgroundHider bgHider(threshold);
   StopWatch stopWatch;
   return processFrames([&](cv::Mat frame) {
     auto millis = stopWatch.getMillisAndReset();
@@ -39,7 +42,8 @@ int main() {
     cv::imshow(BGName, bgEst.backgroundEstimate());
     std::ostringstream oss;
     oss << 1000/millis;
-    cv::putText(frame, oss.str(),cv::Point(30,frame.rows-30), cv::FONT_HERSHEY_COMPLEX_SMALL, 0.8, cv::Scalar(200,200,250),1,CV_AA);
-    cv::imshow(TrackerName, frame);
+    cv::Mat processed = bgHider.process(frame, bgEst.backgroundEstimate());
+    cv::putText(processed, oss.str(),cv::Point(30,frame.rows-30), cv::FONT_HERSHEY_COMPLEX_SMALL, 0.8, cv::Scalar(200,200,250),1,CV_AA);
+    cv::imshow(TrackerName, processed);
   });
 }
